@@ -32,6 +32,13 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local analysis artifacts
+_analyze_excel.py
+_extract_forms.py
+_excel_dump.json
+_forms_extracted.json
 
 # vercel
 .vercel
