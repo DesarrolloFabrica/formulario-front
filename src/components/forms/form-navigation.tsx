@@ -21,7 +21,7 @@ export function FormNavigation({
   const isLast = current === total;
 
   return (
-    <div className="space-y-5 border-t border-slate-200 pt-6">
+    <div className="space-y-5 border-t border-border pt-6">
       <FormProgress current={current} total={total} />
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Button
@@ -41,7 +41,7 @@ export function FormNavigation({
             type="submit"
             size="lg"
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-teal-700 hover:bg-teal-800 sm:w-auto sm:min-w-44"
+            className="w-full rounded-xl sm:w-auto sm:min-w-44"
           >
             {isSubmitting ? (
               <>
@@ -61,7 +61,7 @@ export function FormNavigation({
             size="lg"
             onClick={onNext}
             disabled={isSubmitting}
-            className="w-full rounded-xl bg-teal-700 hover:bg-teal-800 sm:w-auto sm:min-w-32"
+            className="w-full rounded-xl sm:w-auto sm:min-w-32"
           >
             Siguiente
             <ArrowRight className="h-4 w-4" aria-hidden />

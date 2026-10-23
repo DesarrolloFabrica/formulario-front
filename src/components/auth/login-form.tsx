@@ -62,11 +62,11 @@ export function LoginForm() {
             placeholder="correo@ejemplo.com"
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "email-error" : undefined}
-            className="h-[52px] rounded-[14px] border-[var(--login-border)] bg-[var(--login-surface)] px-4 text-base text-[var(--login-text)] shadow-none transition-colors duration-200 placeholder:text-[var(--login-placeholder)] hover:border-[var(--login-border-hover)] focus-visible:border-[var(--login-primary)] focus-visible:ring-[3px] focus-visible:ring-[#905bf4]/30 focus-visible:ring-offset-0 aria-invalid:border-[#fda4af] aria-invalid:focus-visible:ring-[#fb7185]/20 disabled:bg-[#291b48] disabled:text-[var(--login-text-muted)]"
+            className="h-[52px] rounded-[14px] px-4 text-base shadow-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-offset-0 disabled:bg-surface disabled:text-muted"
             {...register("email")}
           />
           {errors.email ? (
-            <p id="email-error" className="ml-1 text-sm text-[#fda4af]" role="alert">
+            <p id="email-error" className="ml-1 text-sm text-danger" role="alert">
               {errors.email.message}
             </p>
           ) : null}
@@ -83,13 +83,13 @@ export function LoginForm() {
             placeholder="••••••••"
             aria-invalid={Boolean(errors.password)}
             aria-describedby={errors.password ? "password-error" : undefined}
-            className="h-[52px] rounded-[14px] border-[var(--login-border)] bg-[var(--login-surface)] px-4 text-base text-[var(--login-text)] shadow-none transition-colors duration-200 placeholder:text-[var(--login-placeholder)] hover:border-[var(--login-border-hover)] focus-visible:border-[var(--login-primary)] focus-visible:ring-[3px] focus-visible:ring-[#905bf4]/30 focus-visible:ring-offset-0 aria-invalid:border-[#fda4af] aria-invalid:focus-visible:ring-[#fb7185]/20 disabled:bg-[#291b48] disabled:text-[var(--login-text-muted)]"
+            className="h-[52px] rounded-[14px] px-4 text-base shadow-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-offset-0 disabled:bg-surface disabled:text-muted"
             {...register("password")}
           />
           {errors.password ? (
             <p
               id="password-error"
-              className="ml-1 text-sm text-[#fda4af]"
+              className="ml-1 text-sm text-danger"
               role="alert"
             >
               {errors.password.message}
@@ -99,7 +99,7 @@ export function LoginForm() {
 
         {serverError ? (
           <p
-            className="rounded-xl border border-[#9f4454] bg-[#3c1724]/70 px-4 py-3 text-sm text-[#fecdd3]"
+            className="rounded-xl border border-danger-border bg-danger-surface/70 px-4 py-3 text-sm text-danger-foreground"
             role="alert"
           >
             {serverError}
@@ -109,7 +109,7 @@ export function LoginForm() {
         <Button
           type="submit"
           size="lg"
-          className="h-[52px] w-full rounded-[14px] bg-[var(--login-primary)] text-base font-semibold text-[var(--login-bg)] shadow-none transition-colors duration-200 hover:bg-[var(--login-primary-hover)] focus-visible:ring-[3px] focus-visible:ring-[#b99aff]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--login-bg)] disabled:bg-[#4e3474] disabled:text-[var(--login-text-muted)] motion-reduce:transition-none"
+          className="h-[52px] w-full rounded-[14px] text-base font-semibold shadow-none transition-colors duration-200 focus-visible:ring-[3px] disabled:bg-accent-soft disabled:text-muted motion-reduce:transition-none"
           disabled={isSubmitting}
         >
           {isSubmitting ? (
@@ -124,7 +124,7 @@ export function LoginForm() {
       </form>
 
       <details className="mt-7 rounded-[14px] border border-[var(--login-border)] bg-[var(--login-surface)] px-4 py-3 text-left text-xs text-[var(--login-text-muted)] transition-colors duration-200 hover:bg-[var(--login-surface-hover)] open:border-[var(--login-border-hover)] motion-reduce:transition-none">
-        <summary className="cursor-pointer select-none rounded-md font-medium text-[var(--login-text)] outline-none marker:text-[var(--login-primary)] hover:text-[#b99aff] focus-visible:ring-2 focus-visible:ring-[var(--login-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--login-bg)]">
+        <summary className="cursor-pointer select-none rounded-md font-medium text-[var(--login-text)] outline-none marker:text-[var(--login-primary)] hover:text-accent-hover focus-visible:ring-2 focus-visible:ring-[var(--login-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--login-bg)]">
           Usuarios de demostración
         </summary>
         <ul className="mt-3 space-y-2 border-t border-[var(--login-border)] pt-3">

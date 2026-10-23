@@ -20,9 +20,11 @@ export function FormSuccess({
   onReset,
 }: FormSuccessProps) {
   return (
-    <Card className="mx-auto max-w-2xl border-teal-200 bg-white">
+    <Card className="mx-auto max-w-2xl border-accent/60 bg-panel/95 shadow-glow">
       <CardHeader className="items-center text-center">
-        <CheckCircle2 className="h-12 w-12 text-teal-700" aria-hidden />
+        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-accent-soft ring-1 ring-accent/50">
+          <CheckCircle2 className="h-12 w-12 text-lavender" aria-hidden />
+        </span>
         <CardTitle className="font-display text-2xl">
           Formulario enviado
         </CardTitle>
@@ -31,11 +33,11 @@ export function FormSuccess({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-center">
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">
+        <p className="rounded-md border border-warning-border bg-warning-surface px-3 py-2 text-sm text-warning">
           Esta es una simulación de demostración. Los datos no se guardaron en
           un servidor.
         </p>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted">
           Referencia simulada: <code>{submissionId}</code>
         </p>
         <Button type="button" variant="outline" onClick={onReset}>

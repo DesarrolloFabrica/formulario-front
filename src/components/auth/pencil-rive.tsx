@@ -5,15 +5,27 @@ import { Alignment, Fit, Layout, useRive } from "@rive-app/react-canvas";
 
 interface PencilRiveProps {
   className?: string;
+  src?: string;
+  artboard?: string;
+  stateMachines?: readonly string[];
+  ariaLabel?: string;
 }
 
-export function PencilRive({ className }: PencilRiveProps) {
+const DEFAULT_STATE_MACHINES = ["State Machine 2", "State Machine 1"];
+
+export function PencilRive({
+  className,
+  src = "/images/lapicito.riv?v=20261022b",
+  artboard = "Desktop - 1",
+  stateMachines = DEFAULT_STATE_MACHINES,
+  ariaLabel = "Lápiz sonriente, avatar de la Fábrica de Contenidos",
+}: PencilRiveProps) {
   const { rive, RiveComponent } = useRive(
     {
-      src: "/images/lapicito.riv?v=20261022b",
-      artboard: "Desktop - 1",
+      src,
+      artboard,
       // Preferimos SM2 (export reciente); si no existe, el effect hace fallback.
-      stateMachine: "State Machine 2",
+      stateMachine: stateMachines[0],
       autoplay: true,
       layout: new Layout({
         fit: Fit.Contain,
@@ -31,9 +43,8 @@ export function PencilRive({ className }: PencilRiveProps) {
 
     const playBestMachine = () => {
       const machines = rive.stateMachineNames;
-      const preferred = ["State Machine 2", "State Machine 1"];
       const target =
-        preferred.find((name) => machines.includes(name)) ?? machines[0];
+        stateMachines.find((name) => machines.includes(name)) ?? machines[0];
 
       if (target) {
         rive.play(target);
@@ -55,14 +66,14 @@ export function PencilRive({ className }: PencilRiveProps) {
       window.clearTimeout(timeout);
       window.removeEventListener("resize", onResize);
     };
-  }, [rive]);
+  }, [rive, stateMachines]);
 
   return (
     <div className={className}>
       <RiveComponent
         className="h-full w-full touch-none"
         role="img"
-        aria-label="Lápiz sonriente, avatar de la Fábrica de Contenidos"
+        aria-label={ariaLabel}
       />
     </div>
   );

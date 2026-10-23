@@ -41,7 +41,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   return (
     <p
       id={id}
-      className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+      className="rounded-xl border border-danger-border bg-danger-surface px-4 py-3 text-sm font-medium text-danger-foreground"
       role="alert"
     >
       {message}
@@ -52,7 +52,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 function OptionText({ id, label }: { id: string; label: string }) {
   return (
     <>
-      <span className="mr-1 font-semibold text-teal-800">{id})</span>
+      <span className="mr-1 font-semibold text-lavender">{id})</span>
       {label}
     </>
   );
@@ -76,7 +76,7 @@ export function FormField({ question }: FormFieldProps) {
 
   const fieldShell = "space-y-4";
   const inputClassName =
-    "h-14 rounded-xl border-slate-300 px-4 text-base shadow-sm focus-visible:ring-teal-600";
+    "h-14 rounded-xl px-4 text-base shadow-sm";
 
   switch (question.type) {
     case "text":
@@ -103,7 +103,7 @@ export function FormField({ question }: FormFieldProps) {
             aria-labelledby={`${question.id}-title`}
             aria-describedby={describedBy}
             aria-invalid={Boolean(errorMessage)}
-            className="min-h-44 rounded-xl border-slate-300 p-4 text-base shadow-sm focus-visible:ring-teal-600"
+            className="min-h-44 rounded-xl p-4 text-base shadow-sm"
             placeholder="Escribe tu respuesta"
             {...register(question.id)}
           />
@@ -169,7 +169,7 @@ export function FormField({ question }: FormFieldProps) {
                           value={option.id}
                           id={`${question.id}-${option.id}`}
                           aria-label={option.label}
-                          className="h-5 w-5 border-slate-400 bg-white data-[state=checked]:border-teal-700 data-[state=checked]:text-teal-700"
+                          className="h-5 w-5"
                         />
                       }
                     >
@@ -215,7 +215,7 @@ export function FormField({ question }: FormFieldProps) {
                                   : selected.filter((id) => id !== option.id);
                               field.onChange(next);
                             }}
-                            className="h-5 w-5 data-[state=checked]:border-teal-700 data-[state=checked]:bg-teal-700"
+                            className="h-5 w-5"
                           />
                         }
                       >
@@ -235,12 +235,12 @@ export function FormField({ question }: FormFieldProps) {
       return (
         <div className={fieldShell}>
           {(question.classificationCategories?.length ?? 0) > 0 ? (
-            <div className="rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
-              <p className="mb-2 font-semibold text-slate-800">Categorías</p>
+            <div className="rounded-xl border border-border bg-accent-soft/55 p-4 text-sm text-muted">
+              <p className="mb-2 font-semibold text-foreground">Categorías</p>
               <ul className="space-y-1.5">
                 {(question.classificationCategories ?? []).map((category) => (
                   <li key={category.id}>
-                    <span className="font-semibold text-teal-800">
+                    <span className="font-semibold text-lavender">
                       {category.id})
                     </span>{" "}
                     {category.label}
@@ -256,9 +256,9 @@ export function FormField({ question }: FormFieldProps) {
                 name={`${question.id}.${item.id}`}
                 control={control}
                 render={({ field }) => (
-                  <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_15rem] sm:items-center">
-                    <p className="text-sm leading-relaxed text-slate-800">
-                      <span className="mr-1 font-semibold text-teal-800">
+                  <div className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_15rem] sm:items-center">
+                    <p className="text-sm leading-relaxed text-foreground">
+                      <span className="mr-1 font-semibold text-lavender">
                         {item.id})
                       </span>
                       {item.label}
@@ -322,16 +322,16 @@ export function FormField({ question }: FormFieldProps) {
                     return (
                       <li
                         key={id}
-                        className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-sm sm:p-4"
                       >
                         <GripVertical
-                          className="hidden h-5 w-5 shrink-0 text-slate-300 sm:block"
+                          className="hidden h-5 w-5 shrink-0 text-subtle sm:block"
                           aria-hidden
                         />
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-800">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-lavender">
                           {index + 1}
                         </span>
-                        <p className="flex-1 text-sm leading-relaxed text-slate-800">
+                        <p className="flex-1 text-sm leading-relaxed text-foreground">
                           <OptionText id={option.id} label={option.label} />
                         </p>
                         <div className="flex shrink-0 gap-1">
@@ -375,7 +375,7 @@ export function FormField({ question }: FormFieldProps) {
             control={control}
             render={({ field }) => (
               <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">
+                <legend className="text-sm font-semibold text-muted">
                   Acción
                 </legend>
                 <RadioGroup
@@ -392,7 +392,7 @@ export function FormField({ question }: FormFieldProps) {
                           <RadioGroupItem
                             value={option.id}
                             aria-label={option.label}
-                            className="h-5 w-5 data-[state=checked]:border-teal-700 data-[state=checked]:text-teal-700"
+                            className="h-5 w-5"
                           />
                         }
                       >
@@ -409,7 +409,7 @@ export function FormField({ question }: FormFieldProps) {
             control={control}
             render={({ field }) => (
               <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-slate-700">
+                <legend className="text-sm font-semibold text-muted">
                   Razón
                 </legend>
                 <RadioGroup
@@ -426,7 +426,7 @@ export function FormField({ question }: FormFieldProps) {
                           <RadioGroupItem
                             value={option.id}
                             aria-label={option.label}
-                            className="h-5 w-5 data-[state=checked]:border-teal-700 data-[state=checked]:text-teal-700"
+                            className="h-5 w-5"
                           />
                         }
                       >

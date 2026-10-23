@@ -8,7 +8,7 @@ interface FormActionsProps {
 
 export function FormActions({ isSubmitting, disabled }: FormActionsProps) {
   return (
-    <div className="sticky bottom-0 -mx-4 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur sm:-mx-0 sm:rounded-b-xl sm:px-0">
+    <div className="sticky bottom-0 -mx-4 border-t border-border bg-panel/95 px-4 py-4 backdrop-blur sm:-mx-0 sm:rounded-b-xl sm:px-0">
       <Button
         type="submit"
         size="lg"

@@ -19,16 +19,16 @@ export function FormHeader({
   isLoggingOut = false,
 }: FormHeaderProps) {
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="border-b border-border bg-panel/90 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div className="min-w-0 space-y-0.5">
-          <p className="text-xs font-medium uppercase tracking-wide text-teal-800">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lavender">
             {projectName}
           </p>
-          <h1 className="truncate font-display text-lg text-slate-900 sm:text-xl">
+          <h1 className="truncate font-display text-lg text-foreground sm:text-xl">
             {formName}
           </h1>
-          <p className="text-sm text-slate-500">{userName}</p>
+          <p className="text-sm text-muted">{userName}</p>
         </div>
         <Button
           type="button"

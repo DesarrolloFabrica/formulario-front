@@ -1,17 +1,81 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f7f8;
-  --foreground: #0f172a;
-  --accent: #0f766e;
-  --card: #ffffff;
-  --muted: #64748b;
-  --border: #e2e8f0;
+  --midnight-purple: #0f032d;
+  --purple-heart: #4e2bcc;
+  --lavender-indigo: #905bf4;
+  --seashell: #efefef;
+
+  --background: var(--midnight-purple);
+  --background-deep: #09011d;
+  --panel: #16083a;
+  --surface: #20113f;
+  --surface-raised: #291650;
+  --surface-hover: #36205e;
+  --surface-selected: #321969;
+  --foreground: var(--seashell);
+  --muted: #cdbbe7;
+  --subtle: #a995c8;
+  --border: #51357f;
+  --border-strong: #7652ad;
+  --accent: var(--lavender-indigo);
+  --accent-hover: #a77bfa;
+  --accent-active: #7b45e5;
+  --accent-soft: #2d1856;
+  --accent-foreground: #10042f;
+  --danger: #fda4af;
+  --danger-border: #9f4454;
+  --danger-surface: #3c1724;
+  --danger-foreground: #fecdd3;
+  --warning: #f0c987;
+  --warning-surface: #3d2c1b;
+  --warning-border: #72532d;
+
+  --gradient-app: radial-gradient(circle at 15% 0%, rgb(78 43 204 / 0.32), transparent 34%), linear-gradient(180deg, #0f032d 0%, #16083a 48%, #09011d 100%);
+  --gradient-login: linear-gradient(135deg, #0f032d 0%, #26105f 35%, #4e2bcc 70%, #905bf4 100%);
+  --gradient-panel: linear-gradient(145deg, #16083a 0%, #0f032d 58%, #130532 100%);
+  --gradient-illustration: radial-gradient(circle at 50% 45%, rgb(144 91 244 / 0.3), transparent 58%), linear-gradient(145deg, #0f032d 0%, #291160 55%, #4e2bcc 100%);
+  --gradient-avatar: radial-gradient(circle at 50% 24%, rgb(144 91 244 / 0.34), transparent 34%), linear-gradient(155deg, #291650 0%, #16083a 56%, #0f032d 100%);
+  --design-shadow-card: 0 24px 80px -42px rgb(3 0 14 / 0.78);
+  --design-shadow-glow: 0 12px 36px -16px rgb(144 91 244 / 0.72);
 }
 
 @theme inline {
+  --color-midnight: var(--midnight-purple);
+  --color-purple-heart: var(--purple-heart);
+  --color-lavender: var(--lavender-indigo);
+  --color-seashell: var(--seashell);
   --color-background: var(--background);
+  --color-background-deep: var(--background-deep);
+  --color-panel: var(--panel);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-selected: var(--surface-selected);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-active: var(--accent-active);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-danger-border: var(--danger-border);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-warning: var(--warning);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --background-image-app: var(--gradient-app);
+  --background-image-login: var(--gradient-login);
+  --background-image-panel-gradient: var(--gradient-panel);
+  --background-image-illustration: var(--gradient-illustration);
+  --background-image-avatar: var(--gradient-avatar);
+  --shadow-card: var(--design-shadow-card);
+  --shadow-glow: var(--design-shadow-glow);
   --font-sans: var(--font-fira-sans);
   --font-display: var(--font-merriweather);
 }
@@ -22,27 +86,52 @@ body {
   font-family: var(--font-fira-sans), "Segoe UI", sans-serif;
 }
 
+::selection {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
 .font-display {
   font-family: var(--font-merriweather), Georgia, serif;
   letter-spacing: -0.01em;
 }
 
 .login-theme {
-  --login-bg: #0f032d;
-  --login-panel: #16083a;
-  --login-surface: #20113f;
-  --login-surface-hover: #36205e;
-  --login-gradient-mid: #26105f;
-  --login-gradient-end: #4e2bcc;
-  --login-border: #51357f;
-  --login-border-hover: #6d4ba1;
-  --login-primary: #905bf4;
-  --login-primary-hover: #a77bfa;
-  --login-text: #efefef;
-  --login-text-muted: #cdbbe7;
-  --login-placeholder: #b7a5d4;
+  --login-bg: var(--background);
+  --login-panel: var(--panel);
+  --login-surface: var(--surface);
+  --login-surface-hover: var(--surface-hover);
+  --login-border: var(--border);
+  --login-border-hover: var(--border-strong);
+  --login-primary: var(--accent);
+  --login-primary-hover: var(--accent-hover);
+  --login-text: var(--foreground);
+  --login-text-muted: var(--muted);
+  --login-placeholder: var(--subtle);
 }
 
 .login-theme input:focus-visible {
   border-color: var(--login-primary);
+}
+
+.avatar-float {
+  animation: avatar-float 4.8s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes avatar-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.35deg);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(0.35deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-float {
+    animation: none;
+  }
 }
