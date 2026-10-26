@@ -124,7 +124,20 @@ function CampaignAdmin() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="closes-at" className="text-sm font-semibold text-foreground">Fecha y hora de finalización</label>
-                <input id="closes-at" type="datetime-local" required value={closesAt} onChange={(event) => setClosesAt(event.target.value)} className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-foreground outline-none focus:ring-2 focus:ring-accent" />
+                <div className="relative">
+                  <input
+                    id="closes-at"
+                    type="datetime-local"
+                    required
+                    value={closesAt}
+                    onChange={(event) => setClosesAt(event.target.value)}
+                    onClick={(event) => {
+                      try { event.currentTarget.showPicker(); } catch { /* El navegador puede tener el selector abierto. */ }
+                    }}
+                    className="h-14 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 pr-14 text-base font-medium text-foreground shadow-sm outline-none transition hover:border-accent/70 hover:bg-surface-hover focus:border-accent focus:ring-2 focus:ring-accent/40 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
+                  />
+                </div>
+                <p className="text-xs text-muted">Haz clic en cualquier parte del campo para elegir la fecha y la hora.</p>
               </div>
               <Button type="submit" size="lg" className="w-full" disabled={submitting || !closesAt || !targetParticipantId}>
                 {submitting ? <><LoaderCircle className="h-4 w-4 animate-spin" />Habilitando…</> : "Habilitar prueba"}
