@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarClock, CheckCircle2, LoaderCircle } from "lucide-react";
+import { Ban, CalendarClock, CheckCircle2, LoaderCircle, Search, UserRound } from "lucide-react";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { FormHeader } from "@/components/forms/form-header";
 import { FormLayout } from "@/components/forms/form-layout";
@@ -14,8 +14,7 @@ const ADMIN_EMAIL = "desarrollofabrica@cun.edu.co";
 
 interface Campaign {
   code: string;
-  name: string;
-  status: "draft" | "open" | "closed";
+  status: "draft" | "open" | "closed" | "cancelled";
   closes_at: string | null;
   target_participant_id: string | null;
 }
@@ -25,6 +24,7 @@ interface Participant {
   full_name: string;
   edu_email: string | null;
   track_name: string | null;
+  role_name: string | null;
 }
 
 export default function AdminPage() {
@@ -34,24 +34,27 @@ export default function AdminPage() {
 function CampaignAdmin() {
   const { user, accessToken, logout } = useAuth();
   const router = useRouter();
-  const [closesAt, setClosesAt] = useState("");
   const [scope, setScope] = useState<"all" | "individual">("individual");
+  const [closesAt, setClosesAt] = useState("");
+  const [search, setSearch] = useState("");
+  const [openSearch, setOpenSearch] = useState("");
   const [targetParticipantId, setTargetParticipantId] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  const loadCampaign = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!accessToken) return;
     try {
-      const [campaigns, people] = await Promise.all([
+      const [allCampaigns, people] = await Promise.all([
         apiRequest<Campaign[]>("/admin/campaigns", {}, accessToken),
         apiRequest<Participant[]>("/admin/participants?onlyActive=true", {}, accessToken),
       ]);
-      setCampaign(campaigns.find((item) => item.status === "open") ?? null);
+      setCampaigns(allCampaigns.filter((item) => item.status === "open"));
       setParticipants(people.filter((person) => person.track_name));
     } catch (err) {
       setError(getApiErrorMessage(err));
@@ -61,109 +64,103 @@ function CampaignAdmin() {
   }, [accessToken]);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => void loadCampaign(), 0);
+    const timer = window.setTimeout(() => void loadData(), 0);
     return () => window.clearTimeout(timer);
-  }, [loadCampaign]);
+  }, [loadData]);
+
+  const openTargetIds = useMemo(
+    () => new Set(campaigns.flatMap((campaign) => campaign.target_participant_id ? [campaign.target_participant_id] : [])),
+    [campaigns],
+  );
+  const filteredParticipants = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase("es");
+    return participants
+      .filter((person) => !openTargetIds.has(person.id))
+      .filter((person) => !term || `${person.full_name} ${person.edu_email ?? ""} ${person.track_name ?? ""}`.toLocaleLowerCase("es").includes(term))
+      .slice(0, 8);
+  }, [openTargetIds, participants, search]);
+  const filteredCampaigns = useMemo(() => {
+    const term = openSearch.trim().toLocaleLowerCase("es");
+    if (!term) return campaigns;
+    return campaigns.filter((campaign) => {
+      const person = participants.find((item) => item.id === campaign.target_participant_id);
+      return `${campaign.code} ${person?.full_name ?? "evaluación general"} ${person?.edu_email ?? ""} ${person?.role_name ?? ""} ${person?.track_name ?? ""}`
+        .toLocaleLowerCase("es")
+        .includes(term);
+    });
+  }, [campaigns, openSearch, participants]);
 
   if (!user) return null;
-
   const authorized = user.appRole === "admin" && user.email.toLowerCase() === ADMIN_EMAIL;
+  const hasGeneralCampaign = campaigns.some((campaign) => !campaign.target_participant_id);
+  const scopeBlocked = hasGeneralCampaign || (scope === "all" && campaigns.length > 0);
+  const selectedParticipant = participants.find((person) => person.id === targetParticipantId);
+  const participantName = (id: string | null) => participants.find((person) => person.id === id)?.full_name ?? "Participante";
+
   const handleLogout = async () => { await logout(); router.replace("/login"); };
 
   const launch = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!accessToken || !closesAt) return;
-    setSubmitting(true);
-    setError(null);
-    setMessage(null);
+    setSubmitting(true); setError(null); setMessage(null);
     try {
       const closingDate = new Date(closesAt);
       await apiRequest<Campaign>("/admin/campaigns/launch", {
         method: "POST",
         body: JSON.stringify({
           name: `Evaluación de competencias en IA · ${closingDate.toLocaleDateString("es-CO")}`,
-          closesAt: closingDate.toISOString(),
-          maxAttempts: 1,
-          shuffleOptions: true,
+          closesAt: closingDate.toISOString(), maxAttempts: 1, shuffleOptions: true,
           ...(scope === "individual" ? { targetParticipantId } : {}),
         }),
       }, accessToken);
-      setMessage("La prueba quedó habilitada correctamente.");
-      await loadCampaign();
-    } catch (err) {
-      setError(getApiErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+      setMessage(scope === "individual" ? `Prueba habilitada para ${selectedParticipant?.full_name}.` : "Evaluación general habilitada.");
+      setTargetParticipantId(""); setSearch("");
+      await loadData();
+    } catch (err) { setError(getApiErrorMessage(err)); }
+    finally { setSubmitting(false); }
+  };
+
+  const cancel = async (campaign: Campaign) => {
+    if (!accessToken || !window.confirm(`¿Cancelar la evaluación de ${campaign.target_participant_id ? participantName(campaign.target_participant_id) : "todos los participantes"}?`)) return;
+    setCancelling(campaign.code); setError(null); setMessage(null);
+    try {
+      await apiRequest(`/admin/campaigns/${encodeURIComponent(campaign.code)}/cancel`, { method: "POST" }, accessToken);
+      setMessage("La evaluación fue cancelada y no generará resultado.");
+      await loadData();
+    } catch (err) { setError(getApiErrorMessage(err)); }
+    finally { setCancelling(null); }
   };
 
   return (
     <FormLayout header={<FormHeader projectName="Fábrica de Contenidos" formName="Administración de evaluaciones" userName={user.name} onLogout={handleLogout} />}>
-      {!authorized ? (
-        <p className="rounded-xl border border-danger-border bg-danger-surface p-4 text-danger-foreground">No tienes permiso para administrar las pruebas.</p>
-      ) : (
-        <section className="mx-auto max-w-2xl rounded-3xl border border-border bg-panel p-6 shadow-card sm:p-8">
-          <div className="mb-7 flex items-start gap-4">
-            <span className="rounded-2xl bg-accent-soft p-3 text-lavender"><CalendarClock className="h-7 w-7" /></span>
-            <div><h2 className="font-display text-2xl text-foreground">Habilitar evaluación</h2><p className="mt-1 text-sm text-muted">Puedes habilitarla para todos los participantes o realizar una prueba con una sola persona.</p></div>
-          </div>
-
-          {loading ? <p className="text-sm text-muted">Consultando estado…</p> : campaign ? (
-            <div className="rounded-2xl border border-accent/50 bg-accent-soft p-5">
-              <p className="flex items-center gap-2 font-semibold text-foreground"><CheckCircle2 className="h-5 w-5 text-lavender" />La prueba está habilitada</p>
-              <p className="mt-2 text-sm text-muted">Alcance: {campaign.target_participant_id ? `Solo ${participants.find((person) => person.id === campaign.target_participant_id)?.full_name ?? "un participante"}` : "Todos los participantes con prueba asignada"}</p>
-              <p className="mt-2 text-sm text-muted">Cierra el {campaign.closes_at ? new Date(campaign.closes_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) : "sin fecha definida"}.</p>
-            </div>
-          ) : (
+      {!authorized ? <p className="rounded-xl border border-danger-border bg-danger-surface p-4 text-danger-foreground">No tienes permiso para administrar las pruebas.</p> : (
+        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(19rem,.8fr)]">
+          <section className="rounded-3xl border border-border bg-panel p-6 shadow-card sm:p-8">
+            <div className="mb-7 flex items-start gap-4"><span className="rounded-2xl bg-accent-soft p-3 text-lavender"><CalendarClock className="h-7 w-7" /></span><div><h2 className="font-display text-2xl text-foreground">Habilitar evaluación</h2><p className="mt-1 text-sm text-muted">Selecciona el alcance y define la fecha de cierre.</p></div></div>
             <form className="space-y-5" onSubmit={launch}>
-              <fieldset className="space-y-3">
-                <legend className="text-sm font-semibold text-foreground">Alcance de la evaluación</legend>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className={`cursor-pointer rounded-2xl border p-4 transition ${scope === "all" ? "border-accent bg-accent-soft ring-1 ring-accent/40" : "border-border bg-surface hover:border-border-strong"}`}>
-                    <input type="radio" name="scope" value="all" checked={scope === "all"} onChange={() => { setScope("all"); setTargetParticipantId(""); }} className="sr-only" />
-                    <span className="block font-semibold text-foreground">Evaluación general</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-muted">Disponible para todos los usuarios activos con una prueba asignada.</span>
-                  </label>
-                  <label className={`cursor-pointer rounded-2xl border p-4 transition ${scope === "individual" ? "border-accent bg-accent-soft ring-1 ring-accent/40" : "border-border bg-surface hover:border-border-strong"}`}>
-                    <input type="radio" name="scope" value="individual" checked={scope === "individual"} onChange={() => setScope("individual")} className="sr-only" />
-                    <span className="block font-semibold text-foreground">Prueba individual</span>
-                    <span className="mt-1 block text-xs leading-relaxed text-muted">Disponible exclusivamente para el usuario seleccionado.</span>
-                  </label>
-                </div>
-              </fieldset>
-              {scope === "individual" ? <div className="space-y-2">
-                <label htmlFor="target-participant" className="text-sm font-semibold text-foreground">Usuario que presentará la prueba</label>
-                <select id="target-participant" required value={targetParticipantId} onChange={(event) => setTargetParticipantId(event.target.value)} className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-foreground outline-none focus:ring-2 focus:ring-accent">
-                  <option value="">Selecciona un usuario</option>
-                  {participants.map((person) => <option key={person.id} value={person.id}>{person.full_name} · {person.edu_email ?? "sin correo"} · {person.track_name}</option>)}
-                </select>
+              <fieldset className="space-y-3"><legend className="text-sm font-semibold text-foreground">Alcance</legend><div className="grid gap-3 sm:grid-cols-2">
+                <ScopeCard active={scope === "all"} title="Evaluación general" description="Para todos los usuarios con prueba asignada." onSelect={() => { setScope("all"); setTargetParticipantId(""); }} />
+                <ScopeCard active={scope === "individual"} title="Prueba individual" description="Solo para la persona seleccionada." onSelect={() => setScope("individual")} />
+              </div></fieldset>
+
+              {scope === "individual" ? <div className="space-y-3"><label htmlFor="participant-search" className="text-sm font-semibold text-foreground">Buscar participante</label><div className="relative"><Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" /><input id="participant-search" value={search} onChange={(event) => { setSearch(event.target.value); setTargetParticipantId(""); }} placeholder="Nombre, correo o prueba" className="h-12 w-full rounded-xl border border-border bg-surface pl-11 pr-4 text-foreground outline-none focus:ring-2 focus:ring-accent" /></div>
+                {selectedParticipant ? <button type="button" onClick={() => setTargetParticipantId("")} className="flex w-full items-center gap-3 rounded-xl border border-accent bg-accent-soft p-3 text-left"><UserRound className="h-5 w-5 text-lavender" /><span><strong className="block text-sm text-foreground">{selectedParticipant.full_name}</strong><span className="text-xs text-muted">{selectedParticipant.edu_email} · {selectedParticipant.track_name}</span></span></button> : search ? <div className="max-h-64 space-y-2 overflow-y-auto rounded-xl border border-border bg-surface p-2">{filteredParticipants.length ? filteredParticipants.map((person) => <button type="button" key={person.id} onClick={() => { setTargetParticipantId(person.id); setSearch(person.full_name); }} className="w-full rounded-lg p-3 text-left transition hover:bg-surface-hover"><strong className="block text-sm text-foreground">{person.full_name}</strong><span className="text-xs text-muted">{person.edu_email ?? "Sin correo"} · {person.track_name}</span></button>) : <p className="p-3 text-sm text-muted">No encontramos participantes disponibles.</p>}</div> : <p className="text-xs text-muted">Escribe para buscar. Los usuarios con una prueba individual abierta no aparecen.</p>}
               </div> : null}
-              <div className="space-y-2">
-                <label htmlFor="closes-at" className="text-sm font-semibold text-foreground">Fecha y hora de finalización</label>
-                <div className="relative">
-                  <input
-                    id="closes-at"
-                    type="datetime-local"
-                    required
-                    value={closesAt}
-                    onChange={(event) => setClosesAt(event.target.value)}
-                    onClick={(event) => {
-                      try { event.currentTarget.showPicker(); } catch { /* El navegador puede tener el selector abierto. */ }
-                    }}
-                    className="h-14 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 pr-14 text-base font-medium text-foreground shadow-sm outline-none transition hover:border-accent/70 hover:bg-surface-hover focus:border-accent focus:ring-2 focus:ring-accent/40 [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:invert"
-                  />
-                </div>
-                <p className="text-xs text-muted">Haz clic en cualquier parte del campo para elegir la fecha y la hora.</p>
-              </div>
-              <Button type="submit" size="lg" className="w-full" disabled={submitting || !closesAt || (scope === "individual" && !targetParticipantId)}>
-                {submitting ? <><LoaderCircle className="h-4 w-4 animate-spin" />Habilitando…</> : "Habilitar prueba"}
-              </Button>
+
+              <div className="space-y-2"><label htmlFor="closes-at" className="text-sm font-semibold text-foreground">Fecha y hora de finalización</label><input id="closes-at" type="datetime-local" required value={closesAt} onChange={(event) => setClosesAt(event.target.value)} onClick={(event) => { try { event.currentTarget.showPicker(); } catch {} }} className="h-14 w-full cursor-pointer rounded-2xl border border-border bg-surface px-4 text-foreground outline-none focus:ring-2 focus:ring-accent [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:h-6 [&::-webkit-calendar-picker-indicator]:w-6 [&::-webkit-calendar-picker-indicator]:invert" /></div>
+              {scopeBlocked ? <p className="rounded-xl border border-warning-border bg-warning-surface p-3 text-sm text-warning">Cancela las evaluaciones abiertas antes de habilitar una evaluación general. Las pruebas individuales sí pueden convivir entre ellas.</p> : null}
+              <Button type="submit" size="lg" className="w-full" disabled={submitting || scopeBlocked || !closesAt || (scope === "individual" && !targetParticipantId)}>{submitting ? <><LoaderCircle className="h-4 w-4 animate-spin" />Habilitando…</> : "Habilitar prueba"}</Button>
             </form>
-          )}
-          {message ? <p className="mt-5 rounded-xl border border-accent/50 bg-accent-soft p-4 text-sm text-foreground">{message}</p> : null}
-          {error ? <p className="mt-5 rounded-xl border border-danger-border bg-danger-surface p-4 text-sm text-danger-foreground" role="alert">{error}</p> : null}
-        </section>
+            {message ? <p className="mt-5 rounded-xl border border-accent/50 bg-accent-soft p-4 text-sm text-foreground">{message}</p> : null}{error ? <p className="mt-5 rounded-xl border border-danger-border bg-danger-surface p-4 text-sm text-danger-foreground" role="alert">{error}</p> : null}
+          </section>
+
+          <aside className="rounded-3xl border border-border bg-panel p-6 shadow-card"><h2 className="font-display text-xl text-foreground">Evaluaciones abiertas</h2><p className="mt-1 text-sm text-muted">{campaigns.length} activa{campaigns.length === 1 ? "" : "s"}</p><div className="relative mt-4"><Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" /><input value={openSearch} onChange={(event) => setOpenSearch(event.target.value)} placeholder="Buscar usuario o cargo" className="h-11 w-full rounded-xl border border-border bg-surface pl-10 pr-3 text-sm text-foreground outline-none focus:ring-2 focus:ring-accent" /></div><div className="mt-4 max-h-[36rem] space-y-3 overflow-y-auto pr-1">{loading ? <p className="text-sm text-muted">Consultando…</p> : filteredCampaigns.length ? filteredCampaigns.map((campaign) => { const person = participants.find((item) => item.id === campaign.target_participant_id); return <div key={campaign.code} className="rounded-2xl border border-border bg-surface p-4"><p className="flex items-center gap-2 text-sm font-semibold text-foreground"><CheckCircle2 className="h-4 w-4 shrink-0 text-lavender" />{campaign.target_participant_id ? participantName(campaign.target_participant_id) : "Evaluación general"}</p>{person ? <><p className="mt-2 text-xs font-medium text-foreground">{person.role_name ?? "Cargo no registrado"}</p><p className="mt-1 text-xs text-muted">{person.edu_email ?? "Sin correo"} · {person.track_name}</p></> : null}<p className="mt-2 text-xs text-muted">Cierra: {campaign.closes_at ? new Date(campaign.closes_at).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" }) : "Sin fecha"}</p><Button type="button" variant="outline" className="mt-4 w-full border-danger-border text-danger-foreground" disabled={cancelling === campaign.code} onClick={() => void cancel(campaign)}>{cancelling === campaign.code ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Ban className="h-4 w-4" />}Cancelar evaluación</Button></div>; }) : <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted">{campaigns.length ? "No hay coincidencias." : "No hay evaluaciones abiertas."}</p>}</div></aside>
+        </div>
       )}
     </FormLayout>
   );
+}
+
+function ScopeCard({ active, title, description, onSelect }: { active: boolean; title: string; description: string; onSelect: () => void }) {
+  return <label className={`cursor-pointer rounded-2xl border p-4 transition ${active ? "border-accent bg-accent-soft ring-1 ring-accent/40" : "border-border bg-surface hover:border-border-strong"}`}><input type="radio" name="scope" checked={active} onChange={onSelect} className="sr-only" /><span className="block font-semibold text-foreground">{title}</span><span className="mt-1 block text-xs text-muted">{description}</span></label>;
 }
