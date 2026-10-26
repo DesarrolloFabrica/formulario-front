@@ -13,7 +13,7 @@ interface ApiQuestion {
   categories: ApiOption[];
 }
 interface ApiAttempt {
-  uuid: string; track: { name: string }; campaign: { name: string };
+  id: string; track: { name: string }; campaign: { name: string };
   questions: ApiQuestion[];
 }
 
@@ -34,7 +34,18 @@ function toQuestion(question: ApiQuestion): FormQuestion {
     helpText: question.context, required: true, competencia: question.competency.name,
     herramienta: question.toolContext,
   };
-  if (code === "CLAS") return { ...base, type: "classification", classificationItems: options(all), classificationCategories: options(question.categories) };
+  if (code === "CLAS") {
+    const left = question.groups.find((group) => group.code === "LEFT") ?? question.groups[0];
+    const right = question.groups.find((group) => group.code === "RIGHT") ?? question.groups[1];
+    return {
+      ...base,
+      type: "classification",
+      classificationItems: options(left?.options),
+      classificationCategories: options(
+        question.categories.length ? question.categories : right?.options,
+      ),
+    };
+  }
   if (code === "DEC-2") return { ...base, type: "decision_two_level", actions: options(question.groups[0]?.options), reasons: options(question.groups[1]?.options) };
   if (code === "ORD") return { ...base, type: "ordering", options: options(all) };
   return { ...base, type: code === "SMM" ? "multi_choice" : "single_choice", options: options(all) };
@@ -70,7 +81,7 @@ export class ApiFormSubmissionService implements FormSubmissionService {
       id, title: id === "transversal" ? "Núcleo transversal" : `Banco del rol — ${role.name}`,
     }));
     const config: FormConfig = {
-      attemptId: attempt.uuid, roleId, name: attempt.track.name,
+      attemptId: attempt.id, roleId, name: attempt.track.name,
       title: attempt.campaign.name, description: "Tus respuestas se guardarán y calificarán al enviar.",
       sections, questions,
       initialAnswers: Object.fromEntries(attempt.questions.flatMap((question) => {

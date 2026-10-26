@@ -49,13 +49,8 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
-function OptionText({ id, label }: { id: string; label: string }) {
-  return (
-    <>
-      <span className="mr-1 font-semibold text-lavender">{id})</span>
-      {label}
-    </>
-  );
+function OptionText({ label }: { label: string }) {
+  return <>{label}</>;
 }
 
 export function FormField({ question }: FormFieldProps) {
@@ -173,7 +168,7 @@ export function FormField({ question }: FormFieldProps) {
                         />
                       }
                     >
-                      <OptionText id={option.id} label={option.label} />
+                      <OptionText label={option.label} />
                     </AnswerCard>
                   ))}
                 </AnswerGrid>
@@ -219,7 +214,7 @@ export function FormField({ question }: FormFieldProps) {
                           />
                         }
                       >
-                        <OptionText id={option.id} label={option.label} />
+                        <OptionText label={option.label} />
                       </AnswerCard>
                     );
                   })}
@@ -240,9 +235,6 @@ export function FormField({ question }: FormFieldProps) {
               <ul className="space-y-1.5">
                 {(question.classificationCategories ?? []).map((category) => (
                   <li key={category.id}>
-                    <span className="font-semibold text-lavender">
-                      {category.id})
-                    </span>{" "}
                     {category.label}
                   </li>
                 ))}
@@ -258,9 +250,6 @@ export function FormField({ question }: FormFieldProps) {
                 render={({ field }) => (
                   <div className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_15rem] sm:items-center">
                     <p className="text-sm leading-relaxed text-foreground">
-                      <span className="mr-1 font-semibold text-lavender">
-                        {item.id})
-                      </span>
                       {item.label}
                     </p>
                     <Select
@@ -277,7 +266,7 @@ export function FormField({ question }: FormFieldProps) {
                         {(question.classificationCategories ?? []).map(
                           (category) => (
                             <SelectItem key={category.id} value={category.id}>
-                              {category.id}) {category.label}
+                              {category.label}
                             </SelectItem>
                           )
                         )}
@@ -340,7 +329,7 @@ export function FormField({ question }: FormFieldProps) {
                           {index + 1}
                         </span>
                         <p className="flex-1 text-sm leading-relaxed text-foreground">
-                          <OptionText id={option.id} label={option.label} />
+                          <OptionText label={option.label} />
                         </p>
                         <div className="flex shrink-0 gap-1">
                           <Button
@@ -374,7 +363,7 @@ export function FormField({ question }: FormFieldProps) {
                     {(question.options ?? []).map((option) => (
                       <label key={option.id} className="flex items-center gap-3 text-sm">
                         <Checkbox checked={answer.excluded.includes(option.id)} onCheckedChange={(state) => toggleExcluded(option.id, state === true)} />
-                        <OptionText id={option.id} label={option.label} />
+                        <OptionText label={option.label} />
                       </label>
                     ))}
                   </div>
@@ -416,7 +405,7 @@ export function FormField({ question }: FormFieldProps) {
                           />
                         }
                       >
-                        <OptionText id={option.id} label={option.label} />
+                        <OptionText label={option.label} />
                       </AnswerCard>
                     ))}
                   </AnswerGrid>
@@ -450,7 +439,7 @@ export function FormField({ question }: FormFieldProps) {
                           />
                         }
                       >
-                        <OptionText id={option.id} label={option.label} />
+                        <OptionText label={option.label} />
                       </AnswerCard>
                     ))}
                   </AnswerGrid>

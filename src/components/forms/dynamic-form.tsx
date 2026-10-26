@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FormProvider,
   useForm,
@@ -13,7 +13,6 @@ import type { FormAnswers, FormConfig } from "@/types/forms";
 import {
   buildDefaultValues,
   buildFormSchema,
-  withShuffledOptions,
 } from "@/lib/form-schema";
 import { formService } from "@/services/form-service";
 import { QuestionStep } from "@/components/forms/question-step";
@@ -33,12 +32,8 @@ export function DynamicForm({ config: rawConfig, user }: DynamicFormProps) {
     submissionId: string;
     message: string;
   } | null>(null);
-  const shuffleId = useId();
-
-  const config = useMemo(
-    () => withShuffledOptions(rawConfig, `${user.id}:${shuffleId}`),
-    [rawConfig, shuffleId, user.id]
-  );
+  // El backend ya entrega un orden aleatorio, estable por intento.
+  const config = rawConfig;
   const schema = useMemo(() => buildFormSchema(config), [config]);
   const defaultValues = useMemo(() => ({ ...buildDefaultValues(config), ...config.initialAnswers }), [config]);
 
