@@ -13,7 +13,7 @@ interface ApiQuestion {
   categories: ApiOption[];
 }
 interface ApiAttempt {
-  id: string; track: { name: string }; campaign: { name: string };
+  id: string; expiresAt: string | null; track: { name: string }; campaign: { name: string };
   questions: ApiQuestion[];
 }
 
@@ -81,7 +81,7 @@ export class ApiFormSubmissionService implements FormSubmissionService {
       id, title: id === "transversal" ? "Núcleo transversal" : `Banco del rol — ${role.name}`,
     }));
     const config: FormConfig = {
-      attemptId: attempt.id, roleId, name: attempt.track.name,
+      attemptId: attempt.id, expiresAt: attempt.expiresAt, roleId, name: attempt.track.name,
       title: attempt.campaign.name, description: "Tus respuestas se guardarán y calificarán al enviar.",
       sections, questions,
       initialAnswers: Object.fromEntries(attempt.questions.flatMap((question) => {
@@ -91,6 +91,16 @@ export class ApiFormSubmissionService implements FormSubmissionService {
     };
     this.attempts.set(roleId, config);
     return config;
+  }
+
+  async saveAnswer(roleId: RoleId, questionId: string, value: FormAnswerValue): Promise<void> {
+    const config = this.attempts.get(roleId);
+    const question = config?.questions.find((item) => item.id === questionId);
+    if (!config?.attemptId || !question?.backendId) throw new Error("No se encontró el intento activo.");
+    await apiRequest(`/attempts/${config.attemptId}/items/${question.backendId}`, {
+      method: "PUT",
+      body: JSON.stringify(toApiAnswer(question, value)),
+    }, token());
   }
 
   async submit(payload: FormSubmissionPayload): Promise<FormSubmissionResult> {
