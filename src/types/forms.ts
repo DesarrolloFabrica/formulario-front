@@ -43,6 +43,7 @@ export interface FormQuestion {
 
 export interface FormConfig {
   attemptId?: string;
+  expiresAt?: string | null;
   initialAnswers?: FormAnswers;
   roleId: RoleId;
   name: string;
@@ -95,4 +96,5 @@ export type FormSubmissionResult = FormSubmissionSuccess | FormSubmissionError;
 export interface FormSubmissionService {
   submit(payload: FormSubmissionPayload): Promise<FormSubmissionResult>;
   getFormConfig(roleId: RoleId): Promise<FormConfig>;
+  saveAnswer(roleId: RoleId, questionId: string, value: FormAnswerValue): Promise<void>;
 }
