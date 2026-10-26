@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 declare global {
   interface Window {
     __formulariosGoogleInitialized?: boolean;
+    __formulariosGoogleCallback?: (credential: string) => void;
     google?: { accounts: { id: {
       initialize(options: { client_id: string; callback: (response: { credential: string }) => void }): void;
       renderButton(element: HTMLElement, options: Record<string, string | number>): void;
@@ -41,12 +42,13 @@ export function LoginForm() {
 
   useEffect(() => {
     if (!ready || !hasGoogleClientId || !clientId || !window.google || !buttonRef.current) return;
+    window.__formulariosGoogleCallback = (credential) => {
+      void finishLogin({ idToken: credential });
+    };
     if (!window.__formulariosGoogleInitialized) {
       window.google.accounts.id.initialize({
         client_id: clientId,
-        callback: async ({ credential }) => {
-          await finishLogin({ idToken: credential });
-        },
+        callback: ({ credential }) => window.__formulariosGoogleCallback?.(credential),
       });
       window.__formulariosGoogleInitialized = true;
     }
@@ -59,7 +61,7 @@ export function LoginForm() {
 
   return (
     <div className="space-y-5">
-      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={() => setReady(true)} />
+      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={() => setReady(true)} />
       {!hasGoogleClientId ? (
         <>
           <button type="button" disabled className="h-11 w-full rounded-full border border-border bg-surface px-4 font-medium text-muted opacity-70">
