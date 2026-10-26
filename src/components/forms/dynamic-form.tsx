@@ -40,7 +40,7 @@ export function DynamicForm({ config: rawConfig, user }: DynamicFormProps) {
     [rawConfig, shuffleId, user.id]
   );
   const schema = useMemo(() => buildFormSchema(config), [config]);
-  const defaultValues = useMemo(() => buildDefaultValues(config), [config]);
+  const defaultValues = useMemo(() => ({ ...buildDefaultValues(config), ...config.initialAnswers }), [config]);
 
   const methods = useForm({
     resolver: zodResolver(schema),
@@ -51,7 +51,6 @@ export function DynamicForm({ config: rawConfig, user }: DynamicFormProps) {
 
   const {
     handleSubmit,
-    reset,
     trigger,
     formState: { isSubmitting, isDirty },
   } = methods;
@@ -126,12 +125,6 @@ export function DynamicForm({ config: rawConfig, user }: DynamicFormProps) {
       <FormSuccess
         submissionId={success.submissionId}
         message={success.message}
-        onReset={() => {
-          setSuccess(null);
-          setSubmitError(null);
-          setActiveIndex(0);
-          reset(defaultValues);
-        }}
       />
     );
   }
@@ -190,7 +183,7 @@ export function DynamicForm({ config: rawConfig, user }: DynamicFormProps) {
           <div className="sticky top-6 hidden md:block">
             <FormAvatar
               questionNumber={activeIndex + 1}
-              roleId={user.roleId}
+              roleId={config.roleId}
             />
           </div>
         </div>

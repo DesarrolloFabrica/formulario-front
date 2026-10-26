@@ -1,5 +1,4 @@
 import { CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,13 +10,11 @@ import {
 interface FormSuccessProps {
   submissionId: string;
   message: string;
-  onReset: () => void;
 }
 
 export function FormSuccess({
   submissionId,
   message,
-  onReset,
 }: FormSuccessProps) {
   return (
     <Card className="mx-auto max-w-2xl border-accent/60 bg-panel/95 shadow-glow">
@@ -33,16 +30,9 @@ export function FormSuccess({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 text-center">
-        <p className="rounded-md border border-warning-border bg-warning-surface px-3 py-2 text-sm text-warning">
-          Esta es una simulación de demostración. Los datos no se guardaron en
-          un servidor.
-        </p>
         <p className="text-xs text-muted">
-          Referencia simulada: <code>{submissionId}</code>
+          Referencia del intento: <code>{submissionId}</code>
         </p>
-        <Button type="button" variant="outline" onClick={onReset}>
-          Volver al formulario
-        </Button>
       </CardContent>
     </Card>
   );

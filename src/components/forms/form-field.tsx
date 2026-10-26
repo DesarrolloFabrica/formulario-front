@@ -299,9 +299,10 @@ export function FormField({ question }: FormFieldProps) {
             name={question.id}
             control={control}
             render={({ field }) => {
-              const order: string[] = Array.isArray(field.value)
-                ? field.value
-                : (question.options ?? []).map((option) => option.id);
+              const answer = field.value && !Array.isArray(field.value)
+                ? field.value as { order: string[]; excluded: string[] }
+                : { order: (question.options ?? []).map((option) => option.id), excluded: [] };
+              const order = answer.order;
               const byId = new Map(
                 (question.options ?? []).map((option) => [option.id, option])
               );
@@ -311,11 +312,18 @@ export function FormField({ question }: FormFieldProps) {
                 const target = index + direction;
                 if (target < 0 || target >= next.length) return;
                 [next[index], next[target]] = [next[target], next[index]];
-                field.onChange(next);
+                field.onChange({ ...answer, order: next });
+              };
+
+              const toggleExcluded = (id: string, checked: boolean) => {
+                field.onChange(checked
+                  ? { order: order.filter((value) => value !== id), excluded: [...answer.excluded, id] }
+                  : { order: [...order, id], excluded: answer.excluded.filter((value) => value !== id) });
               };
 
               return (
-                <ol className="space-y-3" aria-describedby={describedBy}>
+                <div className="space-y-5" aria-describedby={describedBy}>
+                <ol className="space-y-3">
                   {order.map((id, index) => {
                     const option = byId.get(id);
                     if (!option) return null;
@@ -360,6 +368,18 @@ export function FormField({ question }: FormFieldProps) {
                     );
                   })}
                 </ol>
+                <div className="rounded-xl border border-border bg-accent-soft/40 p-4">
+                  <p className="mb-3 text-sm font-semibold text-foreground">Opciones que no corresponden</p>
+                  <div className="space-y-2">
+                    {(question.options ?? []).map((option) => (
+                      <label key={option.id} className="flex items-center gap-3 text-sm">
+                        <Checkbox checked={answer.excluded.includes(option.id)} onCheckedChange={(state) => toggleExcluded(option.id, state === true)} />
+                        <OptionText id={option.id} label={option.label} />
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                </div>
               );
             }}
           />

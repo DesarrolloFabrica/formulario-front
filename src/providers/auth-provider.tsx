@@ -10,17 +10,17 @@ import {
   useState,
 } from "react";
 import { authService } from "@/services/auth-service";
-import type { RoleId } from "@/config/roles";
 import type { AuthSession, AuthUser, LoginCredentials } from "@/types/auth";
 
 interface AuthContextValue {
   user: AuthUser | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (
     credentials: LoginCredentials
   ) => Promise<
-    { ok: true; roleId: RoleId } | { ok: false; message: string }
+    { ok: true; path: string } | { ok: false; message: string }
   >;
   logout: () => Promise<void>;
 }
@@ -45,7 +45,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { ok: false as const, message: result.message };
     }
     setSession(result.session);
-    return { ok: true as const, roleId: result.session.user.roleId };
+    const loggedUser = result.session.user;
+    const path = loggedUser.appRole === "admin"
+      ? "/admin"
+      : loggedUser.roleId
+        ? `/formularios/${loggedUser.roleId}`
+        : "/login";
+    return { ok: true as const, path };
   }, []);
 
   const logout = useCallback(async () => {
@@ -56,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<AuthContextValue>(
     () => ({
       user: session?.user ?? null,
+      accessToken: session?.accessToken ?? null,
       isAuthenticated: Boolean(session?.user),
       isLoading,
       login,

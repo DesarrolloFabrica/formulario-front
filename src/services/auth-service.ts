@@ -1,25 +1,25 @@
-import { findMockUser, toAuthUser } from "@/data/mock-users";
-import { sleep } from "@/lib/utils";
-import type {
-  AuthService,
-  AuthSession,
-  LoginCredentials,
-  LoginResult,
-} from "@/types/auth";
+import { roleIdFromTrackCode } from "@/config/roles";
+import { apiRequest, getApiErrorMessage } from "@/services/api-client";
+import type { AuthService, AuthSession, LoginCredentials, LoginResult } from "@/types/auth";
 
 const SESSION_STORAGE_KEY = "formularios-front.auth.session";
 
-function readStoredSession(): AuthSession | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
+interface ApiLoginResponse {
+  accessToken: string;
+  user: { participantId: string; fullName: string; email: string; role: "participant" | "evaluator" | "admin"; track: { code: string } | null };
+}
 
+function readStoredSession(): AuthSession | null {
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
-    if (!raw) {
+    if (!raw) return null;
+    const session = JSON.parse(raw) as AuthSession;
+    if (!session.user?.appRole) {
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
       return null;
     }
-    return JSON.parse(raw) as AuthSession;
+    return session;
   } catch {
     window.localStorage.removeItem(SESSION_STORAGE_KEY);
     return null;
@@ -27,62 +27,35 @@ function readStoredSession(): AuthSession | null {
 }
 
 function writeStoredSession(session: AuthSession | null): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  if (!session) {
-    window.localStorage.removeItem(SESSION_STORAGE_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  if (typeof window === "undefined") return;
+  if (session) window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  else window.localStorage.removeItem(SESSION_STORAGE_KEY);
 }
 
-/**
- * Servicio de autenticación MOCK.
- * Sustituir esta implementación por un cliente API real sin cambiar AuthService.
- */
-export class MockAuthService implements AuthService {
+export class ApiAuthService implements AuthService {
   async login(credentials: LoginCredentials): Promise<LoginResult> {
-    await sleep(900);
-
-    const email = credentials.email.trim();
-    const password = credentials.password;
-
-    if (!email || !password) {
-      return {
-        success: false,
-        message: "El correo y la contraseña son obligatorios.",
+    try {
+      const isLocalLogin = Boolean(credentials.email);
+      const response = await apiRequest<ApiLoginResponse>(isLocalLogin ? "/auth/local" : "/auth/google", {
+        method: "POST",
+        body: JSON.stringify(isLocalLogin ? { email: credentials.email } : { idToken: credentials.idToken }),
+      });
+      const roleId = response.user.track ? roleIdFromTrackCode(response.user.track.code) : null;
+      if (!roleId && response.user.role !== "admin") return { success: false, message: "Tu usuario no tiene una prueba asignada." };
+      const session: AuthSession = {
+        accessToken: response.accessToken,
+        authenticatedAt: new Date().toISOString(),
+        user: { id: response.user.participantId, email: response.user.email, name: response.user.fullName, roleId, appRole: response.user.role },
       };
+      writeStoredSession(session);
+      return { success: true, session };
+    } catch (error) {
+      return { success: false, message: getApiErrorMessage(error) };
     }
-
-    const user = findMockUser(email, password);
-    if (!user) {
-      return {
-        success: false,
-        message: "Correo o contraseña incorrectos. Usa un usuario de demostración.",
-      };
-    }
-
-    const session: AuthSession = {
-      user: toAuthUser(user),
-      authenticatedAt: new Date().toISOString(),
-    };
-
-    writeStoredSession(session);
-
-    return { success: true, session };
   }
 
-  async logout(): Promise<void> {
-    await sleep(200);
-    writeStoredSession(null);
-  }
-
-  getSession(): AuthSession | null {
-    return readStoredSession();
-  }
+  async logout(): Promise<void> { writeStoredSession(null); }
+  getSession(): AuthSession | null { return readStoredSession(); }
 }
 
-export const authService: AuthService = new MockAuthService();
+export const authService: AuthService = new ApiAuthService();

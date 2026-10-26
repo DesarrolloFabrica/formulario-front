@@ -14,7 +14,7 @@ export default function HomePage() {
     if (isLoading) return;
 
     if (isAuthenticated && user) {
-      router.replace(getFormPathForRole(user.roleId));
+      router.replace(user.appRole === "admin" ? "/admin" : user.roleId ? getFormPathForRole(user.roleId) : "/login");
       return;
     }
 

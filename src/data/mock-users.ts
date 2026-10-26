@@ -12,6 +12,7 @@ export const MOCK_USERS: MockUser[] = [
     password: "demo1234",
     name: "Ana Data",
     roleId: "data-desarrollo",
+    appRole: "participant",
   },
   {
     id: "user-gif",
@@ -19,6 +20,7 @@ export const MOCK_USERS: MockUser[] = [
     password: "demo1234",
     name: "Carlos GIF",
     roleId: "gif",
+    appRole: "participant",
   },
   {
     id: "user-realizadores",
@@ -26,6 +28,7 @@ export const MOCK_USERS: MockUser[] = [
     password: "demo1234",
     name: "Laura Realizadora",
     roleId: "realizadores",
+    appRole: "participant",
   },
   {
     id: "user-presentadoras",
@@ -33,6 +36,7 @@ export const MOCK_USERS: MockUser[] = [
     password: "demo1234",
     name: "María Presentadora",
     roleId: "presentadoras",
+    appRole: "participant",
   },
   {
     id: "user-analistas-marketing",
@@ -40,6 +44,7 @@ export const MOCK_USERS: MockUser[] = [
     password: "demo1234",
     name: "Diego Marketing",
     roleId: "analistas-marketing",
+    appRole: "participant",
   },
 ];
 
@@ -60,5 +65,6 @@ export function toAuthUser(user: MockUser): AuthUser {
     email: user.email,
     name: user.name,
     roleId: user.roleId as RoleId,
+    appRole: "participant",
   };
 }

@@ -2,7 +2,7 @@
 
 MVP frontend de la plataforma de formularios por rol de la **Fábrica de Contenidos**.
 
-En esta fase solo existe el frontend. La autenticación y el envío de respuestas son **simulados (MOCK)** y están preparados para sustituirse por servicios reales sin reconstruir la UI.
+Frontend conectado al backend NestJS de evaluaciones: autenticación institucional con Google, sesión JWT, reanudación de intentos, guardado de respuestas y calificación final.
 
 ## Tecnologías
 
@@ -23,10 +23,11 @@ En esta fase solo existe el frontend. La autenticación y el envío de respuesta
 
 ```bash
 npm install
+copy .env.example .env.local
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000).
+Abre [http://localhost:3001](http://localhost:3001). El backend debe estar disponible en `http://localhost:3000/api`.
 
 Otros scripts:
 

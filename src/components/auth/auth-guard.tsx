@@ -30,7 +30,7 @@ export function AuthGuard({
 
     if (guestOnly) {
       if (isAuthenticated && user) {
-        router.replace(getFormPathForRole(user.roleId));
+        router.replace(user.appRole === "admin" ? "/admin" : user.roleId ? getFormPathForRole(user.roleId) : "/login");
       }
       return;
     }
@@ -41,7 +41,7 @@ export function AuthGuard({
     }
 
     if (requiredRoleId && isRoleId(requiredRoleId) && user.roleId !== requiredRoleId) {
-      router.replace(getFormPathForRole(user.roleId));
+      router.replace(user.appRole === "admin" ? "/admin" : user.roleId ? getFormPathForRole(user.roleId) : "/login");
     }
   }, [
     isLoading,

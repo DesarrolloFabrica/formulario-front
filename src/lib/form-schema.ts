@@ -36,14 +36,10 @@ function questionSchema(question: FormQuestion): z.ZodTypeAny {
     }
     case "ordering": {
       const count = question.options?.length ?? 0;
-      const base = z.array(z.string());
-      return question.required
-        ? base
-            .length(count, "Ordena todas las opciones")
-            .refine((ids) => new Set(ids).size === ids.length, {
-              message: "No repitas opciones en el orden",
-            })
-        : base.optional();
+      return z.object({ order: z.array(z.string()), excluded: z.array(z.string()) })
+        .refine(({ order, excluded }) => order.length + excluded.length === count, {
+          message: "Ordena o excluye todas las opciones",
+        });
     }
     case "decision_two_level": {
       return z.object({
@@ -89,7 +85,7 @@ export function buildDefaultValues(
         break;
       }
       case "ordering":
-        values[question.id] = (question.options ?? []).map((o) => o.id);
+        values[question.id] = { order: (question.options ?? []).map((o) => o.id), excluded: [] };
         break;
       case "decision_two_level":
         values[question.id] = { action: "", reason: "" };
@@ -201,11 +197,7 @@ export function isAnswerComplete(
       );
     }
     case "ordering":
-      return (
-        Array.isArray(value) &&
-        value.length === (question.options?.length ?? 0) &&
-        new Set(value).size === value.length
-      );
+      return Boolean(value && typeof value === "object" && "order" in value && "excluded" in value);
     case "decision_two_level": {
       if (!value || typeof value !== "object") return false;
       const v = value as { action?: string; reason?: string };

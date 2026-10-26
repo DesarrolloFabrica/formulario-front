@@ -24,6 +24,7 @@ export interface FormSectionConfig {
 
 export interface FormQuestion {
   id: string;
+  backendId?: string;
   number: number;
   block: string;
   sectionId: string;
@@ -41,6 +42,8 @@ export interface FormQuestion {
 }
 
 export interface FormConfig {
+  attemptId?: string;
+  initialAnswers?: FormAnswers;
   roleId: RoleId;
   name: string;
   title: string;
@@ -55,6 +58,7 @@ export type DecisionTwoLevelAnswer = {
 };
 
 export type ClassificationAnswer = Record<string, string>;
+export type OrderingAnswer = { order: string[]; excluded: string[] };
 
 export type FormAnswerValue =
   | string
@@ -62,6 +66,7 @@ export type FormAnswerValue =
   | string[]
   | ClassificationAnswer
   | DecisionTwoLevelAnswer
+  | OrderingAnswer
   | null
   | undefined;
 
@@ -89,5 +94,5 @@ export type FormSubmissionResult = FormSubmissionSuccess | FormSubmissionError;
 
 export interface FormSubmissionService {
   submit(payload: FormSubmissionPayload): Promise<FormSubmissionResult>;
-  getFormConfig(roleId: RoleId): FormConfig;
+  getFormConfig(roleId: RoleId): Promise<FormConfig>;
 }

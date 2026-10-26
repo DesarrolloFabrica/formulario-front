@@ -1,141 +1,108 @@
 "use client";
 
-import { useState } from "react";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle } from "lucide-react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { getFormPathForRole } from "@/config/roles";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { MOCK_USERS } from "@/data/mock-users";
 
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "El correo es obligatorio")
-    .email("Ingresa un correo válido"),
-  password: z.string().min(1, "La contraseña es obligatoria"),
-});
+declare global {
+  interface Window {
+    __formulariosGoogleInitialized?: boolean;
+    google?: { accounts: { id: {
+      initialize(options: { client_id: string; callback: (response: { credential: string }) => void }): void;
+      renderButton(element: HTMLElement, options: Record<string, string | number>): void;
+    } } };
+  }
+}
 
-type LoginValues = z.infer<typeof loginSchema>;
+const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+const hasGoogleClientId = Boolean(clientId && clientId !== "tu-client-id.apps.googleusercontent.com");
+const subscribeHostname = () => () => undefined;
+const getIsLocalhost = () => ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
 export function LoginForm() {
   const { login } = useAuth();
   const router = useRouter();
+  const buttonRef = useRef<HTMLDivElement>(null);
+  const [ready, setReady] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isLocalhost = useSyncExternalStore(subscribeHostname, getIsLocalhost, () => false);
+  const [email, setEmail] = useState("");
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
-  });
-
-  const onSubmit = handleSubmit(async (values) => {
+  const finishLogin = useCallback(async (credentials: { idToken?: string; email?: string }) => {
+    setIsSubmitting(true);
     setServerError(null);
-    const result = await login(values);
-    if (!result.ok) {
-      setServerError(result.message);
-      return;
-    }
+    const result = await login(credentials);
+    setIsSubmitting(false);
+    if (!result.ok) return setServerError(result.message);
+    router.replace(result.path);
+  }, [login, router]);
 
-    router.replace(getFormPathForRole(result.roleId));
-  });
+  useEffect(() => {
+    if (!ready || !hasGoogleClientId || !clientId || !window.google || !buttonRef.current) return;
+    if (!window.__formulariosGoogleInitialized) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: async ({ credential }) => {
+          await finishLogin({ idToken: credential });
+        },
+      });
+      window.__formulariosGoogleInitialized = true;
+    }
+    buttonRef.current.replaceChildren();
+    window.google.accounts.id.renderButton(buttonRef.current, {
+      type: "standard", theme: "outline", size: "large", shape: "pill",
+      text: "signin_with", width: 360, locale: "es",
+    });
+  }, [finishLogin, ready]);
 
   return (
-    <div>
-      <form onSubmit={onSubmit} className="space-y-5" noValidate>
-        <div className="space-y-2.5">
-          <Label htmlFor="email" className="ml-1 text-sm font-medium text-[var(--login-text)]">
-            Correo electrónico
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="username"
-            placeholder="correo@ejemplo.com"
-            aria-invalid={Boolean(errors.email)}
-            aria-describedby={errors.email ? "email-error" : undefined}
-            className="h-[52px] rounded-[14px] px-4 text-base shadow-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-offset-0 disabled:bg-surface disabled:text-muted"
-            {...register("email")}
-          />
-          {errors.email ? (
-            <p id="email-error" className="ml-1 text-sm text-danger" role="alert">
-              {errors.email.message}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="space-y-2.5">
-          <Label htmlFor="password" className="ml-1 text-sm font-medium text-[var(--login-text)]">
-            Contraseña
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            placeholder="••••••••"
-            aria-invalid={Boolean(errors.password)}
-            aria-describedby={errors.password ? "password-error" : undefined}
-            className="h-[52px] rounded-[14px] px-4 text-base shadow-none transition-colors duration-200 focus-visible:ring-[3px] focus-visible:ring-offset-0 disabled:bg-surface disabled:text-muted"
-            {...register("password")}
-          />
-          {errors.password ? (
-            <p
-              id="password-error"
-              className="ml-1 text-sm text-danger"
-              role="alert"
-            >
-              {errors.password.message}
-            </p>
-          ) : null}
-        </div>
-
-        {serverError ? (
-          <p
-            className="rounded-xl border border-danger-border bg-danger-surface/70 px-4 py-3 text-sm text-danger-foreground"
-            role="alert"
-          >
-            {serverError}
+    <div className="space-y-5">
+      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={() => setReady(true)} />
+      {!hasGoogleClientId ? (
+        <>
+          <button type="button" disabled className="h-11 w-full rounded-full border border-border bg-surface px-4 font-medium text-muted opacity-70">
+            Continuar con Google
+          </button>
+          <p className="rounded-xl border border-danger-border bg-danger-surface px-4 py-3 text-sm text-danger-foreground" role="alert">
+            Configura un NEXT_PUBLIC_GOOGLE_CLIENT_ID real para habilitar este acceso.
           </p>
-        ) : null}
-
-        <Button
-          type="submit"
-          size="lg"
-          className="h-[52px] w-full rounded-[14px] text-base font-semibold shadow-none transition-colors duration-200 focus-visible:ring-[3px] disabled:bg-accent-soft disabled:text-muted motion-reduce:transition-none"
-          disabled={isSubmitting}
+        </>
+      ) : null}
+      {hasGoogleClientId ? <div className="flex min-h-11 justify-center" ref={buttonRef} aria-busy={isSubmitting} /> : null}
+      {isLocalhost ? (
+        <form
+          className="space-y-3 border-t border-border pt-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void finishLogin({ email: email.trim() });
+          }}
         >
-          {isSubmitting ? (
-            <>
-              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
-              Iniciando sesión…
-            </>
-          ) : (
-            "Iniciar sesión"
-          )}
-        </Button>
-      </form>
-
-      <details className="mt-7 rounded-[14px] border border-[var(--login-border)] bg-[var(--login-surface)] px-4 py-3 text-left text-xs text-[var(--login-text-muted)] transition-colors duration-200 hover:bg-[var(--login-surface-hover)] open:border-[var(--login-border-hover)] motion-reduce:transition-none">
-        <summary className="cursor-pointer select-none rounded-md font-medium text-[var(--login-text)] outline-none marker:text-[var(--login-primary)] hover:text-accent-hover focus-visible:ring-2 focus-visible:ring-[var(--login-primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--login-bg)]">
-          Usuarios de demostración
-        </summary>
-        <ul className="mt-3 space-y-2 border-t border-[var(--login-border)] pt-3">
-          {MOCK_USERS.map((user) => (
-            <li key={user.id} className="break-words">
-              <span className="font-semibold">{user.roleId}:</span> {user.email} /{" "}
-              {user.password}
-            </li>
-          ))}
-        </ul>
-      </details>
+          <label htmlFor="local-email" className="block text-sm font-medium text-foreground">
+            Acceso local
+          </label>
+          <input
+            id="local-email"
+            type="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="usuario@cun.edu.co"
+            className="h-12 w-full rounded-xl border border-border bg-surface px-4 text-foreground outline-none focus:ring-2 focus:ring-accent"
+          />
+          <button
+            type="submit"
+            disabled={isSubmitting || !email.trim()}
+            className="h-12 w-full rounded-xl bg-accent px-4 font-semibold text-accent-foreground disabled:opacity-50"
+          >
+            Entrar solo con correo
+          </button>
+        </form>
+      ) : null}
+      {isSubmitting ? <p className="text-center text-sm text-muted">Validando tu cuenta institucional…</p> : null}
+      {serverError ? <p className="rounded-xl border border-danger-border bg-danger-surface px-4 py-3 text-sm text-danger-foreground" role="alert">{serverError}</p> : null}
+      <p className="text-center text-xs leading-relaxed text-muted">Ingresa con tu cuenta institucional @cun.edu.co.</p>
     </div>
   );
 }

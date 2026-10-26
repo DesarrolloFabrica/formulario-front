@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { FormLayout } from "@/components/forms/form-layout";
@@ -9,6 +9,8 @@ import { DynamicForm } from "@/components/forms/dynamic-form";
 import { useAuth } from "@/hooks/use-auth";
 import { getRoleConfig, type RoleId } from "@/config/roles";
 import { formService } from "@/services/form-service";
+import type { FormConfig } from "@/types/forms";
+import { LoadingState } from "@/components/auth/loading-state";
 
 interface RoleFormPageProps {
   roleId: RoleId;
@@ -26,8 +28,17 @@ function RoleFormContent({ roleId }: RoleFormPageProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [config, setConfig] = useState<FormConfig | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const role = getRoleConfig(roleId);
-  const config = formService.getFormConfig(roleId);
+
+  useEffect(() => {
+    let active = true;
+    formService.getFormConfig(roleId)
+      .then((value) => { if (active) setConfig(value); })
+      .catch((error: unknown) => { if (active) setLoadError(error instanceof Error ? error.message : "No fue posible cargar la evaluación."); });
+    return () => { active = false; };
+  }, [roleId]);
 
   if (!user) {
     return null;
@@ -51,7 +62,15 @@ function RoleFormContent({ roleId }: RoleFormPageProps) {
         />
       }
     >
-      <DynamicForm config={config} user={user} />
+      {loadError ? (
+        <p className="rounded-xl border border-danger-border bg-danger-surface p-4 text-danger-foreground" role="alert">
+          {loadError}
+        </p>
+      ) : config ? (
+        <DynamicForm config={config} user={user} />
+      ) : (
+        <LoadingState message="Preparando tu evaluación…" />
+      )}
     </FormLayout>
   );
 }

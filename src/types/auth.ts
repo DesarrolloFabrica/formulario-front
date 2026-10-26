@@ -4,16 +4,18 @@ export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  roleId: RoleId;
+  roleId: RoleId | null;
+  appRole: "participant" | "evaluator" | "admin";
 }
 
 export interface LoginCredentials {
-  email: string;
-  password: string;
+  idToken?: string;
+  email?: string;
 }
 
 export interface AuthSession {
   user: AuthUser;
+  accessToken: string;
   authenticatedAt: string;
 }
 

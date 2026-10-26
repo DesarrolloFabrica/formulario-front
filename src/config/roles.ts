@@ -59,3 +59,15 @@ export function getRoleConfig(roleId: RoleId): RoleConfig {
 export function getFormPathForRole(roleId: RoleId): RoleConfig["formPath"] {
   return ROLES[roleId].formPath;
 }
+
+const TRACK_TO_ROLE: Record<string, RoleId> = {
+  DATA_DESARROLLO: "data-desarrollo",
+  GIF: "gif",
+  REALIZADORES: "realizadores",
+  PRESENTADORAS: "presentadoras",
+  ANALISTAS_MARKETING: "analistas-marketing",
+};
+
+export function roleIdFromTrackCode(code: string): RoleId | null {
+  return TRACK_TO_ROLE[code.toUpperCase()] ?? null;
+}
