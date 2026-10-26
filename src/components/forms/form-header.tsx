@@ -1,12 +1,13 @@
 "use client";
 
-import { LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { LogOut, UserRound } from "lucide-react";
 
 interface FormHeaderProps {
   projectName: string;
   formName: string;
   userName: string;
+  userRole?: string;
   onLogout: () => void;
   isLoggingOut?: boolean;
 }
@@ -15,31 +16,58 @@ export function FormHeader({
   projectName,
   formName,
   userName,
+  userRole,
   onLogout,
   isLoggingOut = false,
 }: FormHeaderProps) {
   return (
-    <header className="border-b border-border bg-panel/90 shadow-sm backdrop-blur-xl">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-        <div className="min-w-0 space-y-0.5">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-lavender">
-            {projectName}
-          </p>
-          <h1 className="truncate font-display text-lg text-foreground sm:text-xl">
-            {formName}
-          </h1>
-          <p className="text-sm text-muted">{userName}</p>
+    <header className="formHeader">
+      <div className="decorations" aria-hidden="true">
+        <span className="arc" />
+        <span className="wave" />
+        <span className="dots" />
+      </div>
+
+      <div className="content">
+        <div className="brand" aria-hidden="true">
+          <div className="logoSurface">
+            <Image
+              src="/images/favicon.ico"
+              alt=""
+              width={256}
+              height={256}
+              unoptimized
+              className="logo"
+            />
+          </div>
         </div>
-        <Button
+
+        <div className="information">
+          <p className="eyebrow">{projectName}</p>
+          <h1 className="title">{formName}</h1>
+          <div className="userBadge">
+            <span className="userIcon">
+              <UserRound aria-hidden="true" />
+            </span>
+            <span className="userText">{userName}</span>
+            {userRole ? (
+              <>
+                <span className="userSeparator" aria-hidden="true" />
+                <span className="userRole">{userRole}</span>
+              </>
+            ) : null}
+          </div>
+        </div>
+
+        <button
           type="button"
-          variant="outline"
           onClick={onLogout}
           disabled={isLoggingOut}
-          className="shrink-0 self-start sm:self-auto"
+          className="logout"
         >
-          <LogOut className="h-4 w-4" />
-          Cerrar sesión
-        </Button>
+          <LogOut aria-hidden="true" />
+          <span>{isLoggingOut ? "Cerrando…" : "Cerrar sesión"}</span>
+        </button>
       </div>
     </header>
   );

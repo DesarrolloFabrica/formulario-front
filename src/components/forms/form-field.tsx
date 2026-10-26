@@ -1,7 +1,7 @@
 "use client";
 
 import { Controller, useFormContext, type FieldValues } from "react-hook-form";
-import { ArrowDown, ArrowUp, GripVertical } from "lucide-react";
+import { ArrowDown, ArrowUp, CircleX, GripVertical, RotateCcw } from "lucide-react";
 import type { FormQuestion } from "@/types/forms";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -248,8 +248,8 @@ export function FormField({ question }: FormFieldProps) {
                 name={`${question.id}.${item.id}`}
                 control={control}
                 render={({ field }) => (
-                  <div className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[1fr_15rem] sm:items-center">
-                    <p className="text-sm leading-relaxed text-foreground">
+                  <div className="grid gap-3 rounded-xl border border-border bg-surface p-4 sm:grid-cols-[minmax(0,1fr)_minmax(17rem,20rem)] sm:items-center lg:grid-cols-[minmax(0,1fr)_minmax(20rem,22rem)]">
+                    <p className="min-w-0 break-words text-sm leading-relaxed text-foreground">
                       {item.label}
                     </p>
                     <Select
@@ -258,14 +258,18 @@ export function FormField({ question }: FormFieldProps) {
                     >
                       <SelectTrigger
                         aria-label={`Clasificación para ítem ${item.id}`}
-                        className="w-full"
+                        className="h-auto min-h-12 w-full gap-3 py-2.5 text-left [&>span]:min-w-0 [&>span]:whitespace-normal [&>span]:break-words [&>span]:leading-snug [&>svg]:shrink-0"
                       >
                         <SelectValue placeholder="Selecciona categoría" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]">
                         {(question.classificationCategories ?? []).map(
                           (category) => (
-                            <SelectItem key={category.id} value={category.id}>
+                            <SelectItem
+                              key={category.id}
+                              value={category.id}
+                              className="py-2 pr-3 leading-snug"
+                            >
                               {category.label}
                             </SelectItem>
                           )
@@ -304,41 +308,68 @@ export function FormField({ question }: FormFieldProps) {
                 field.onChange({ ...answer, order: next });
               };
 
-              const toggleExcluded = (id: string, checked: boolean) => {
-                field.onChange(checked
-                  ? { order: order.filter((value) => value !== id), excluded: [...answer.excluded, id] }
-                  : { order: [...order, id], excluded: answer.excluded.filter((value) => value !== id) });
+              const toggleExcluded = (id: string, shouldExclude: boolean) => {
+                field.onChange(shouldExclude
+                  ? {
+                      order: order.filter((value) => value !== id),
+                      excluded: [...new Set([...answer.excluded, id])],
+                    }
+                  : {
+                      order: [...order, id],
+                      excluded: answer.excluded.filter((value) => value !== id),
+                    });
               };
 
+              const visibleOptions = [
+                ...order.map((id) => ({ id, excluded: false })),
+                ...answer.excluded.map((id) => ({ id, excluded: true })),
+              ];
+
               return (
-                <div className="space-y-5" aria-describedby={describedBy}>
+                <div aria-describedby={describedBy}>
                 <ol className="space-y-3">
-                  {order.map((id, index) => {
+                  {visibleOptions.map(({ id, excluded }, index) => {
                     const option = byId.get(id);
                     if (!option) return null;
+                    const activeIndex = excluded ? -1 : index;
                     return (
                       <li
                         key={id}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-sm sm:p-4"
+                        className={excluded
+                          ? "flex flex-wrap items-center gap-3 rounded-xl border border-danger-border/70 bg-danger-surface/35 p-3 shadow-sm sm:p-4"
+                          : "flex flex-wrap items-center gap-3 rounded-xl border border-border bg-surface p-3 shadow-sm sm:p-4"}
                       >
                         <GripVertical
-                          className="hidden h-5 w-5 shrink-0 text-subtle sm:block"
+                          className={excluded
+                            ? "hidden h-5 w-5 shrink-0 text-subtle/40 sm:block"
+                            : "hidden h-5 w-5 shrink-0 text-subtle sm:block"}
                           aria-hidden
                         />
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-lavender">
-                          {index + 1}
+                        <span className={excluded
+                          ? "flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full bg-danger-surface px-2 text-danger-foreground"
+                          : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-lavender"}
+                        >
+                          {excluded ? <CircleX className="h-4 w-4" aria-hidden /> : activeIndex + 1}
                         </span>
-                        <p className="flex-1 text-sm leading-relaxed text-foreground">
+                        <p className={excluded
+                          ? "min-w-[12rem] flex-1 text-sm leading-relaxed text-muted line-through decoration-danger-foreground/60"
+                          : "min-w-[12rem] flex-1 text-sm leading-relaxed text-foreground"}
+                        >
                           <OptionText label={option.label} />
                         </p>
-                        <div className="flex shrink-0 gap-1">
+                        {excluded ? (
+                          <span className="rounded-full border border-danger-border bg-danger-surface px-2.5 py-1 text-xs font-semibold text-danger-foreground">
+                            Excluida
+                          </span>
+                        ) : null}
+                        <div className="ml-auto flex shrink-0 gap-1">
                           <Button
                             type="button"
                             size="icon"
                             variant="ghost"
                             aria-label={`Subir ${option.id}`}
-                            disabled={index === 0}
-                            onClick={() => move(index, -1)}
+                            disabled={excluded || activeIndex === 0}
+                            onClick={() => move(activeIndex, -1)}
                           >
                             <ArrowUp className="h-4 w-4" aria-hidden />
                           </Button>
@@ -347,27 +378,31 @@ export function FormField({ question }: FormFieldProps) {
                             size="icon"
                             variant="ghost"
                             aria-label={`Bajar ${option.id}`}
-                            disabled={index === order.length - 1}
-                            onClick={() => move(index, 1)}
+                            disabled={excluded || activeIndex === order.length - 1}
+                            onClick={() => move(activeIndex, 1)}
                           >
                             <ArrowDown className="h-4 w-4" aria-hidden />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            aria-label={`${excluded ? "Restaurar" : "Excluir"} ${option.id}`}
+                            onClick={() => toggleExcluded(id, !excluded)}
+                            className={excluded
+                              ? "ml-1 border-accent/70 bg-accent-soft text-foreground hover:bg-surface-hover"
+                              : "ml-1 border-danger-border bg-danger-surface/30 text-danger-foreground hover:bg-danger-surface"}
+                          >
+                            {excluded
+                              ? <RotateCcw className="h-4 w-4" aria-hidden />
+                              : <CircleX className="h-4 w-4" aria-hidden />}
+                            {excluded ? "Restaurar" : "Excluir"}
                           </Button>
                         </div>
                       </li>
                     );
                   })}
                 </ol>
-                <div className="rounded-xl border border-border bg-accent-soft/40 p-4">
-                  <p className="mb-3 text-sm font-semibold text-foreground">Opciones que no corresponden</p>
-                  <div className="space-y-2">
-                    {(question.options ?? []).map((option) => (
-                      <label key={option.id} className="flex items-center gap-3 text-sm">
-                        <Checkbox checked={answer.excluded.includes(option.id)} onCheckedChange={(state) => toggleExcluded(option.id, state === true)} />
-                        <OptionText label={option.label} />
-                      </label>
-                    ))}
-                  </div>
-                </div>
                 </div>
               );
             }}

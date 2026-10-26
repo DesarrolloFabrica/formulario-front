@@ -132,9 +132,9 @@ function CampaignAdmin() {
   };
 
   return (
-    <FormLayout header={<FormHeader projectName="Fábrica de Contenidos" formName="Administración de evaluaciones" userName={user.name} onLogout={handleLogout} />}>
+    <FormLayout header={<FormHeader projectName="Fábrica de Contenidos" formName="Administración de evaluaciones" userName={user.name} userRole="Administrador" onLogout={handleLogout} />}>
       {!authorized ? <p className="rounded-xl border border-danger-border bg-danger-surface p-4 text-danger-foreground">No tienes permiso para administrar las pruebas.</p> : (
-        <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(19rem,.8fr)]">
+        <div className="mx-auto grid w-full gap-6 lg:grid-cols-[minmax(0,58fr)_minmax(20rem,42fr)] lg:gap-8">
           <section className="rounded-3xl border border-border bg-panel p-6 shadow-card sm:p-8">
             <div className="mb-7 flex items-start gap-4"><span className="rounded-2xl bg-accent-soft p-3 text-lavender"><CalendarClock className="h-7 w-7" /></span><div><h2 className="font-display text-2xl text-foreground">Habilitar evaluación</h2><p className="mt-1 text-sm text-muted">Selecciona el alcance y define la fecha de cierre.</p></div></div>
             <form className="space-y-5" onSubmit={launch}>

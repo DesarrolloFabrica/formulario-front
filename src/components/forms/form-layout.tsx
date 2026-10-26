@@ -7,7 +7,7 @@ export function FormLayout({ header, children }: FormLayoutProps) {
   return (
     <div className="min-h-screen bg-app text-foreground">
       {header}
-      <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <main className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:w-[94%] lg:max-w-[1700px] lg:px-0 lg:py-10">
         {children}
       </main>
     </div>

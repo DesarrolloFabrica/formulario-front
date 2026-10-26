@@ -19,6 +19,9 @@ export const metadata: Metadata = {
   title: "Formularios — Fábrica de Contenidos",
   description:
     "Plataforma de formularios por rol de la Fábrica de Contenidos (MVP frontend).",
+  icons: {
+    icon: "/images/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

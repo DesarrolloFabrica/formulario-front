@@ -57,6 +57,7 @@ function RoleFormContent({ roleId }: RoleFormPageProps) {
           projectName="Fábrica de Contenidos"
           formName={role.name}
           userName={user.name}
+          userRole={role.shortName}
           onLogout={handleLogout}
           isLoggingOut={isLoggingOut}
         />

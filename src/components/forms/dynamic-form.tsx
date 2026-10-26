@@ -146,8 +146,8 @@ export function DynamicForm({ config: rawConfig, user }: DynamicFormProps) {
           </p>
         </div>
 
-        <div className="grid items-start gap-5 md:grid-cols-[minmax(0,3fr)_minmax(13rem,1fr)] lg:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)]">
-          <div className="min-w-0 rounded-[2rem] border border-border bg-panel/95 p-5 shadow-card backdrop-blur-sm sm:p-8 lg:p-10">
+        <div className="grid items-start gap-5 md:grid-cols-[minmax(0,3fr)_minmax(13rem,1fr)] lg:grid-cols-[minmax(0,3fr)_minmax(18rem,2fr)] lg:gap-8">
+          <div className="min-w-0 p-5 sm:p-8 md:pr-6 lg:p-10 lg:pr-8">
             <QuestionStep
               question={activeQuestion}
               current={activeIndex + 1}
